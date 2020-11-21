@@ -7,51 +7,64 @@ public class EnemyController : MonoBehaviour
     private FieldOfView FoVscript;
 
     private Transform GFx;
-
     public GameObject VFx;
 
     private Vector3 lastPos = Vector3.zero;
     private Vector3 currentPos = Vector3.zero;
 
-    [SerializeField] private int baseDMG;
-    [SerializeField] private int fireRate;
+    private Vector3 originalPos;
+    private Vector3 direction;
+
+    private int baseDMG;
+    private int fireRate;
+    private int currentHP;
 
     private float fireCD = 0;
-
-    private int x = 0;
-    private int d = 1;
+    public bool playerInRange { set; get; }
 
     void Start()
     {
         EnemyControllerMaster.ListOfEnemies.Add(gameObject);
+        originalPos = transform.position;
         GFx = transform.GetChild(0);
 
         GameObject f = Instantiate(FoVobject, transform.position, Quaternion.identity, transform);
         FoVscript = f.GetComponent<FieldOfView>();
-        FoVscript.SetController(this);
+        FoVscript.SetData(this, eData.FoV, eData.viewDistance);
+
+        baseDMG = eData.baseDMG;
+        fireRate = eData.fireRate;
+        currentHP = eData.maxHP;
+
+        if (eData.moveAxis == EnemyData.Axis.LeftRight)
+            direction = new Vector3(1, 0, 0);
+        else
+            direction = new Vector3(0, 0, 1);
     }
 
     void Update()
-    {/*
-        if (Input.GetKey(KeyCode.RightArrow))
-            gameObject.transform.Translate(Time.deltaTime, 0, 0);
-        if (Input.GetKey(KeyCode.LeftArrow))
-            gameObject.transform.Translate(-Time.deltaTime, 0, 0);
-        if (Input.GetKey(KeyCode.UpArrow))
-            gameObject.transform.Translate(0, 0, Time.deltaTime);
-        if (Input.GetKey(KeyCode.DownArrow))
-            gameObject.transform.Translate(0, 0, -Time.deltaTime);
-        */
-        if(x < 600)
-        {
-            gameObject.transform.Translate(d * Time.deltaTime, 0, 0);
-            x += 1;
-        }
+    {
+        if (playerInRange)
+            Attack();
         else
         {
-            d *= -1;
-            x = 0;
+            if (!UtilLib.InRange(currentPos, originalPos, eData.moveDistance))
+                SwapDirection();
+            transform.Translate(direction * eData.movementSpeed * Time.deltaTime);
         }
+    }
+
+    public void TakeDMG(int amount)
+    {
+        currentHP -= amount;
+        if (currentHP <= 0)
+            Destroy(gameObject);
+    }
+
+    private void SwapDirection()
+    {
+        direction = -direction;
+        transform.Translate(direction * eData.movementSpeed * Time.deltaTime);
     }
 
     public void Attack()
@@ -62,6 +75,12 @@ public class EnemyController : MonoBehaviour
             GameObject v = Instantiate(VFx, transform.position, Quaternion.identity);
             v.GetComponent<Magic>().DMG = baseDMG;
         }
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if(collision.gameObject.layer == 10)
+        SwapDirection();
     }
 
     void LateUpdate()

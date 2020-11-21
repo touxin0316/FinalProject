@@ -6,32 +6,38 @@ public class PlayerController : MonoBehaviour
     public static PlayerController controller;
 
     public float movementSpeed;
-    public GameObject targeting;
 
-    private Transform GFx;
-    private Vector3 movement;
     private Rigidbody rb;
+    private Transform GFx;
+
+    private Vector3 movement;
+    private GameObject currentlySelected;
 
     void Start()
     {
         controller = this;
         rb = gameObject.GetComponent<Rigidbody>();
         GFx = gameObject.transform.GetChild(1);
-        targeting.SetActive(false);
+        currentlySelected = null;
     }
 
     void Update()
     {
         MouseCheck();
+
         movement.x = Input.GetAxisRaw("Horizontal");
         movement.z = Input.GetAxisRaw("Vertical");
         movement.y = 0;
+
         if (Input.mousePosition.x > Screen.width / 2)
             GFx.localScale = new Vector3(1.0f, 1.0f, 1.0f);
         else
             GFx.localScale = new Vector3(-1.0f, 1.0f, 1.0f);
-        if (Input.GetKeyDown(KeyCode.Escape))
-            Application.Quit();
+    }
+
+    public void Deselect()
+    {
+        currentlySelected = null;
     }
 
     private void MouseCheck()
@@ -41,35 +47,34 @@ public class PlayerController : MonoBehaviour
         {
             RaycastHit hit2;
             Vector3 dir = hit.transform.position - transform.position;
-            Physics.Raycast(transform.position, dir, out hit2, PlayerData.player.activeRange);
-
-            if (hit2.transform != hit.transform)
+            dir.y = 0;
+            if (Physics.Raycast(transform.position, dir, out hit2, PlayerData.player.activeRange))
             {
-                targeting.SetActive(false);
-                return;
-            }
-
-            if (hit.transform.tag != "Targetable")
-            {
-                targeting.SetActive(false);
-                return;
-            }
-
-            targeting.SetActive(true);
-            Vector3 pos = hit.transform.position;
-            pos.y = 0.01f;
-            targeting.transform.position = pos;
-
-            if (Input.GetMouseButtonDown(0))
-            {
-                if (hit.transform.GetComponent<EnemyController>() != null)
+                GameObject target = hit2.transform.gameObject;
+                if (currentlySelected == null && target.GetComponent<SelectableObject>() != null)
                 {
-                    Destroy(hit.transform.gameObject);
+                    if (target.GetComponent<SelectableObject>().isAvailable)
+                    {
+                        currentlySelected = target;
+                        target.GetComponent<SelectableObject>().MouseEnter();
+                    }
                 }
-                if (hit.transform.GetComponent<BreakableObject>() != null)
+                if (currentlySelected != null && target != currentlySelected)
                 {
-                    Destroy(hit.transform.gameObject);
+                    currentlySelected.GetComponent<SelectableObject>().MouseExit();
+                    if (target.GetComponent<SelectableObject>() != null && target.GetComponent<SelectableObject>().isAvailable)
+                    {
+                        currentlySelected = target;
+                        target.GetComponent<SelectableObject>().MouseEnter();
+                    }
+                    else
+                        currentlySelected = null;
                 }
+            }
+            else if (currentlySelected != null)
+            {
+                currentlySelected.GetComponent<SelectableObject>().MouseExit();
+                currentlySelected = null;
             }
         }
     }

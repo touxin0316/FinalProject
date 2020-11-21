@@ -11,15 +11,15 @@ public class PlayerData : MonoBehaviour
     private int ammoCount = 8;
 
     public float activeRange { get; } = 2.5f;
-
+    /*
     [Header("UI")]
     public Image barHP;
     public Text barAmmo;
-
+    */
     void Start()
     {
         player = this;
-        UpdateUI();
+        //UpdateUI();
     }
 
     void Update()
@@ -30,9 +30,15 @@ public class PlayerData : MonoBehaviour
     public void TakeDMG(int amount)
     {
         currentHP -= amount;
-        UpdateUI();
+        //UpdateUI();
     }
 
+    public int GetDMG()
+    {
+        return 1;
+    }
+
+    /*
     private void UpdateUI()
     {
         barHP.fillAmount = (float)currentHP / maxHP;
@@ -41,7 +47,7 @@ public class PlayerData : MonoBehaviour
             ammo += "I";
         barAmmo.text = ammo;
     }
-
+    */
     public Vector3 Position
     {
         get

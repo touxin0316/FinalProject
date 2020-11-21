@@ -4,9 +4,10 @@
 public class FieldOfView : MonoBehaviour
 {
     private LayerMask mask;
-    [SerializeField] private float fov = 90.0f;
     private int rayCount = 256;
-    [SerializeField] private float viewDistance = 0.0f;
+
+    private float fov;
+    private float viewDistance;
 
     private EnemyController controller;
 
@@ -22,18 +23,20 @@ public class FieldOfView : MonoBehaviour
         mesh = new Mesh();
         mask = LayerMask.GetMask("Wall");
         gameObject.GetComponent<MeshFilter>().mesh = mesh;
-        gameObject.transform.Translate(0, 0.05f, 0);
-    }
-
-    public void SetController(EnemyController c)
-    {
-        controller = c;
+        gameObject.transform.Translate(0, 0.1f, 0);
     }
 
     void Update()
     {
         if (isMoving)
             CalculateFoV();
+    }
+
+    public void SetData(EnemyController c, float FoV, float distance)
+    {
+        controller = c;
+        fov = FoV;
+        viewDistance = distance;
     }
 
     private void CalculateFoV()
@@ -94,7 +97,10 @@ public class FieldOfView : MonoBehaviour
     private void CheckPlayer()
     {
         if (!UtilLib.InRange(transform.position, PlayerData.player.Position, viewDistance))
+        {
+            controller.playerInRange = false;
             return;
+        }
 
         Vector3 dir = PlayerData.player.Position - transform.position;
         if (Vector3.Angle(direction, dir) < fov / 2)
@@ -102,8 +108,12 @@ public class FieldOfView : MonoBehaviour
             RaycastHit hit;
             Physics.Raycast(transform.position, dir, out hit, viewDistance);
             if (hit.transform.name == "Player")
-                controller.Attack();
+                controller.playerInRange = true;
+            else
+                controller.playerInRange = false;
         }
+        else
+            controller.playerInRange = false;
     }
 
 }

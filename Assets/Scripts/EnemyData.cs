@@ -8,7 +8,9 @@ public class EnemyData : ScriptableObject
     [Header("Basic Data")]
     public string enemyName;
     public int baseDMG;
+    public int fireRate;
     public int maxHP;
+    public int movementSpeed;
 
     [Header("Movement")]
     public Axis moveAxis;
